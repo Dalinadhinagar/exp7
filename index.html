@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Learning Website</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4ff;
+            text-align: center;
+            margin: 0;
+        }
+
+        header {
+            background-color: #5146d8;
+            color: white;
+            padding: 25px;
+        }
+
+        .container {
+            background-color: white;
+            width: 80%;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px #cccccc;
+        }
+
+        h2 {
+            color: #5146d8;
+        }
+
+        select, button {
+            padding: 10px;
+            margin: 8px;
+            border-radius: 6px;
+            border: 1px solid #cccccc;
+        }
+
+        button {
+            background-color: #5146d8;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #3025a5;
+        }
+
+        #word {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        #translation, #feedback {
+            color: green;
+            font-weight: bold;
+        }
+
+        .option {
+            display: block;
+            width: 80%;
+            max-width: 300px;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Language Learning Website</h1>
+    <p>Learn new words and test your knowledge!</p>
+</header>
+
+<div class="container">
+    <h2>Select Language</h2>
+
+    <select id="language">
+        <option value="Spanish">Spanish</option>
+        <option value="French">French</option>
+        <option value="German">German</option>
+    </select>
+
+    <button id="load">Load Lesson</button>
+</div>
+
+<div class="container">
+    <h2>Vocabulary Flashcard</h2>
+
+    <p id="word">Hola</p>
+    <p id="translation">Click below to see the meaning.</p>
+
+    <button id="show">Show Translation</button>
+    <button id="next">Next Word</button>
+</div>
+
+<div class="container">
+    <h2>Language Quiz</h2>
+
+    <p id="question">What does Hola mean?</p>
+    <div id="options"></div>
+    <p id="feedback"></p>
+
+    <p>Score: <span id="score">0</span></p>
+    <p>Questions Answered: <span id="answered">0</span>/5</p>
+
+    <button id="restart">Restart Quiz</button>
+</div>
+
+<script>
+$(document).ready(function() {
+
+    let lessons = {
+        Spanish: [
+            {word: "Hola", meaning: "Hello"},
+            {word: "Gracias", meaning: "Thank you"},
+            {word: "Agua", meaning: "Water"},
+            {word: "Amigo", meaning: "Friend"},
+            {word: "Adios", meaning: "Goodbye"}
+        ],
+
+        French: [
+            {word: "Bonjour", meaning: "Hello"},
+            {word: "Merci", meaning: "Thank you"},
+            {word: "Eau", meaning: "Water"},
+            {word: "Ami", meaning: "Friend"},
+            {word: "Au revoir", meaning: "Goodbye"}
+        ],
+
+        German: [
+            {word: "Hallo", meaning: "Hello"},
+            {word: "Danke", meaning: "Thank you"},
+            {word: "Wasser", meaning: "Water"},
+            {word: "Freund", meaning: "Friend"},
+            {word: "Tschuss", meaning: "Goodbye"}
+        ]
+    };
+
+    let words = lessons.Spanish;
+    let index = 0;
+    let quizIndex = 0;
+    let score = 0;
+    let answered = 0;
+    let locked = false;
+
+    function showWord() {
+        $("#word").text(words[index].word);
+        $("#translation").text("Click below to see the meaning.");
+    }
+
+    function showQuestion() {
+        if (quizIndex >= words.length) {
+            $("#question").text("Quiz Completed!");
+            $("#options").empty();
+            $("#feedback").text(
+                "Final Score: " + score + " out of " + words.length
+            );
+            return;
+        }
+
+        locked = false;
+
+        let current = words[quizIndex];
+
+        $("#question").text(
+            "What does " + current.word + " mean?"
+        );
+
+        $("#feedback").text("");
+        $("#options").empty();
+
+        let choices = [current.meaning];
+
+        words.forEach(function(item) {
+            if (item.meaning != current.meaning &&
+                choices.length < 3) {
+                choices.push(item.meaning);
+            }
+        });
+
+        choices.sort(function() {
+            return Math.random() - 0.5;
+        });
+
+        choices.forEach(function(choice) {
+            $("<button>")
+                .text(choice)
+                .addClass("option")
+                .click(function() {
+                    checkAnswer(choice, current.meaning);
+                })
+                .appendTo("#options");
+        });
+    }
+
+    function checkAnswer(selected, correct) {
+        if (locked) {
+            return;
+        }
+
+        locked = true;
+        answered++;
+
+        if (selected == correct) {
+            score++;
+            $("#feedback").text("Correct Answer!");
+            $("#feedback").css("color", "green");
+        } else {
+            $("#feedback").text(
+                "Wrong Answer! Correct answer: " + correct
+            );
+            $("#feedback").css("color", "red");
+        }
+
+        $("#score").text(score);
+        $("#answered").text(answered);
+        $("#options button").prop("disabled", true);
+
+        $("<button>")
+            .text("Next Question")
+            .click(function() {
+                quizIndex++;
+                showQuestion();
+            })
+            .appendTo("#options");
+    }
+
+    $("#load").click(function() {
+        words = lessons[$("#language").val()];
+
+        index = 0;
+        quizIndex = 0;
+        score = 0;
+        answered = 0;
+
+        $("#score").text(score);
+        $("#answered").text(answered);
+
+        showWord();
+        showQuestion();
+    });
+
+    $("#show").click(function() {
+        $("#translation").text(words[index].meaning);
+    });
+
+    $("#next").click(function() {
+        index = (index + 1) % words.length;
+        showWord();
+    });
+
+    $("#restart").click(function() {
+        quizIndex = 0;
+        score = 0;
+        answered = 0;
+
+        $("#score").text(score);
+        $("#answered").text(answered);
+
+        showQuestion();
+    });
+
+    showWord();
+    showQuestion();
+
+});
+</script>
+
+</body>
+</html>
+```
+
